@@ -1,3 +1,4 @@
+require 'date'
 require 'thread'
 require 'curses'
 require 'yaml'
@@ -22,26 +23,28 @@ def load_config
    end
 end
 
-def get_tweets(context)
+def get_tweets(context, last_id)
 
    tweets = nil
 
    if context.length == 0 then
-      tweets = Twitter.home_timeline
+      tweets = Twitter.home_timeline(:since_id => last_id)
    else
-      tweets = Twitter.search(context, :count => 20, :result_type => 'recent').results
+      tweets = Twitter.search(context, :count => 20, :result_type => 'recent', :since_id => last_id).results
    end
 
-   tweets
-
+   tweets.reverse
 end
 
-def colorize_tweet(from, text, win)
+def colorize_tweet(created, from, text, win)
 
    orig = Curses.color_pair(Curses::COLOR_BLUE) | Curses::A_NORMAL
    user = Curses.color_pair(Curses::COLOR_RED) | Curses::A_NORMAL
    tag  = Curses.color_pair(Curses::COLOR_GREEN) | Curses::A_NORMAL
    url  = Curses.color_pair(Curses::COLOR_MAGENTA) | Curses::A_NORMAL
+
+
+   win.addstr(created.strftime('%H:%M') + ' ')
 
    # first, print who the tweet was made by in blue
    win.addstr("<")
@@ -64,6 +67,7 @@ end
 begin
    current_tweets = []
    context = ""
+   last_id = 1
    running = true
    force_clear = false
    mutex = Mutex.new
@@ -94,11 +98,10 @@ begin
          mutex.synchronize do
             begin
                # get all tweets for the current context
-               tweets = get_tweets(context)
+               tweets = get_tweets(context, last_id)
 
-               # filter out tweets that are already on screen
-               filtered = tweets.select { |t| !current_tweets.include?(t.id) }
-               current_tweets.concat(filtered.collect { |t| t.id })
+               greatest = tweets.max { |a, b| a.id <=> b.id }
+               last_id = greatest.id if greatest != nil
 
                # check if we want a clear
                if force_clear then
@@ -107,8 +110,8 @@ begin
                end
 
                # present tweets
-               filtered.map do |tweet|
-                  colorize_tweet(tweet.from_user, tweet.text, channel.window)
+               tweets.map do |tweet|
+                  colorize_tweet(tweet.created_at, tweet.from_user, tweet.text, channel.window)
                   channel.println("")
                end
             rescue Exception => e
@@ -132,11 +135,18 @@ begin
       running = false if /^\/quit$/.match(command)
       resource.signal if /^\/refresh$/.match(command)
 
+      if /^\/home$/.match(command) then
+         context = ""
+         last_id = 1
+         force_clear = true
+         resource.signal
+      end
+
       # test if we're switching contexts
       context_parts = /^\/show (?<context>.*)$/.match(command)
       if context_parts != nil then
          context = context_parts['context']
-         current_tweets = []
+         last_id = 1
          force_clear = true
          resource.signal
       end
