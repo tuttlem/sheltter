@@ -132,22 +132,26 @@ begin
       command = talk.window.getstr()
 
       # interpret the command
-      running = false if /^\/quit$/.match(command)
-      resource.signal if /^\/refresh$/.match(command)
-
-      if /^\/home$/.match(command) then
+      if /^\/quit$/.match(command) then
+         running = false
+      elsif /^\/refresh$/.match(command) then
+         resource.signal
+      elsif /^\/home$/.match(command) then
          context = ""
          last_id = 1
          force_clear = true
          resource.signal
-      end
+      elsif /^\/show (?<context>.*)$/.match(command) then
+         # test if we're switching contexts
+         context_parts = /^\/show (?<context>.*)$/.match(command)
 
-      # test if we're switching contexts
-      context_parts = /^\/show (?<context>.*)$/.match(command)
-      if context_parts != nil then
          context = context_parts['context']
          last_id = 1
          force_clear = true
+         resource.signal
+      else
+         # in any other case, it's a tweet
+         Twitter.update(command)
          resource.signal
       end
 
