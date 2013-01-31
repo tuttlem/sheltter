@@ -29,6 +29,8 @@ def get_tweets(context, last_id)
 
    if context.length == 0 then
       tweets = Twitter.home_timeline(:since_id => last_id)
+   elsif /^@.*$/.match(context)
+      tweets = Twitter.user_timeline(context)
    else
       tweets = Twitter.search(context, :count => 20, :result_type => 'recent', :since_id => last_id).results
    end
