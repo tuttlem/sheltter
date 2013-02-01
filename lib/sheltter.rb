@@ -89,7 +89,7 @@ begin
    Curses.init_pair(Curses::COLOR_MAGENTA, Curses::COLOR_MAGENTA, -1)
 
    # create the channel window
-   channel = ScrollerWindow.new(Curses.lines - 3, Curses.cols, 0, 0)
+   channel = ScrollerWindow.new(Curses.lines - 1, Curses.cols, 0, 0)
    channel.refresh
 
 
@@ -126,7 +126,7 @@ begin
    end
 
    # create the speech window
-   talk = ScrollerWindow.new(3, Curses.cols, Curses.lines - 3, 0)
+   talk = ScrollerWindow.new(1, Curses.cols, Curses.lines - 1, 0)
    talk.refresh
 
    while running do

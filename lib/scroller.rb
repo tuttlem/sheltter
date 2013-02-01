@@ -4,10 +4,10 @@ require 'curses'
 class ScrollerWindow
 
    def initialize(height, width, top, left)
-      @win_border = Curses::Window.new(height, width, top, left)
-      @win_content = @win_border.subwin(height - 2, width - 2, top + 1, left + 1)
+    #  @win_border = Curses::Window.new(height, width, top, left)
+      @win_content = Curses::Window.new(height, width, top, left)
 
-      @win_border.box('|', '-')
+   #   @win_border.box('|', '-')
       @win_content.scrollok(true)
       @win_content.idlok(true)
    end
@@ -27,7 +27,7 @@ class ScrollerWindow
 
    def refresh
       @win_content.refresh
-      @win_border.refresh
+    #  @win_border.refresh
    end
 
    def window
@@ -36,6 +36,6 @@ class ScrollerWindow
 
    def close
       @win_content.close
-      @win_border.close
+ #     @win_border.close
    end
 end
